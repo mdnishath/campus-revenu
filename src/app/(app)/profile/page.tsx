@@ -119,6 +119,12 @@ export default function ProfilePage() {
     router.push("/login");
   }
 
+  async function handleLogout() {
+    if (supabaseEnabled) await signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
   if (isLoading || !me) {
     return (
       <>
@@ -163,9 +169,12 @@ export default function ProfilePage() {
             <div className="text-faint text-sm truncate">{me.email}</div>
           </div>
           {me.verified ? (
-            <span className="ml-auto flex items-center gap-1.5 bg-success/10 text-success text-xs font-semibold px-3 py-1.5 rounded-full">
-              <CheckIcon width={12} height={12} />
-              Verified · France
+            <span
+              className="ml-auto flex items-center gap-1.5 bg-success/10 text-success px-2.5 py-1.5 rounded-full"
+              title="Verified · France"
+            >
+              <CheckIcon width={13} height={13} />
+              <span className="text-sm leading-none">🇫🇷</span>
             </span>
           ) : (
             <span className="ml-auto bg-warning/10 text-warning text-xs font-semibold px-3 py-1.5 rounded-full">
@@ -241,9 +250,14 @@ export default function ProfilePage() {
         {error && <div className="text-danger text-sm">{error}</div>}
 
         <div className="flex items-center justify-between gap-4">
-          <Button variant="ghost" className="text-danger" onClick={handleDelete}>
-            Delete account
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={handleLogout}>
+              Log out
+            </Button>
+            <Button variant="ghost" className="text-danger" onClick={handleDelete}>
+              Delete account
+            </Button>
+          </div>
           <div className="flex items-center gap-3">
             {saved && <span className="text-success text-sm">Saved ✓</span>}
             <Button onClick={handleSave} disabled={saving}>
