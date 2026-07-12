@@ -29,6 +29,13 @@ export function useTasks() {
   });
 }
 
+export function useAdminTasks() {
+  return useQuery({
+    queryKey: ["admin", "tasks"],
+    queryFn: source(sb.fetchAdminTasks, mock.tasks),
+  });
+}
+
 export function useTask(id: string) {
   return useQuery({
     queryKey: ["task", id],

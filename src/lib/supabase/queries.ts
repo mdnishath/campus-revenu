@@ -46,6 +46,8 @@ function mapTask(r: any): Task {
     reviewText: r.review_text ?? undefined,
     startsAt: r.starts_at ?? null,
     endsAt: r.ends_at ?? null,
+    reusable: r.reusable ?? true,
+    filledCount: r.filled_count ?? 0,
   };
 }
 function mapSubmission(r: any): Submission {
@@ -99,6 +101,12 @@ export async function fetchCurrentStudent(): Promise<StudentProfile | null> {
   if (!user) return null;
   const { data } = await sb.from("profiles").select("*").eq("id", user.id).single();
   if (!data) return null;
+  // Google (OAuth) sign-in confirms the account, so treat those users as
+  // verified even if the DB column hasn't been backfilled yet.
+  const isGoogle =
+    user.app_metadata?.provider === "google" ||
+    (user.app_metadata?.providers ?? []).includes("google") ||
+    (user.identities ?? []).some((i: { provider: string }) => i.provider === "google");
   return {
     id: data.id,
     name: data.full_name ?? "Student",
@@ -111,7 +119,7 @@ export async function fetchCurrentStudent(): Promise<StudentProfile | null> {
     city: data.city ?? undefined,
     iban: data.iban ?? undefined,
     role: data.role,
-    verified: data.verified,
+    verified: data.verified || isGoogle,
     balanceAvailable: n(data.balance_available),
     balancePending: n(data.balance_pending),
     tasksCompleted: data.tasks_completed ?? 0,
@@ -119,6 +127,20 @@ export async function fetchCurrentStudent(): Promise<StudentProfile | null> {
 }
 
 export async function fetchTasks(): Promise<Task[]> {
+  const sb = getSupabaseBrowser();
+  const { data } = await sb
+    .from("tasks")
+    .select("*")
+    .eq("status", "live")
+    // Hide one-time tasks that another student has already taken.
+    // (reusable tasks stay visible; one-time only while filled_count = 0)
+    .or("reusable.eq.true,filled_count.eq.0")
+    .order("created_at", { ascending: false });
+  return (data ?? []).map(mapTask);
+}
+
+// Admin task list — every live task, including one-time tasks already taken.
+export async function fetchAdminTasks(): Promise<Task[]> {
   const sb = getSupabaseBrowser();
   const { data } = await sb
     .from("tasks")
@@ -295,6 +317,7 @@ export interface NewTask {
   review_text: string | null;
   starts_at: string | null;
   ends_at: string | null;
+  reusable: boolean;
 }
 
 export async function createTask(task: NewTask) {

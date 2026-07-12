@@ -26,7 +26,7 @@ export const currentStudent: StudentProfile = {
   tasksCompleted: 27,
 };
 
-export const tasks: Task[] = [
+const mockTasks: Omit<Task, "reusable" | "filledCount">[] = [
   {
     id: "t-2841",
     ref: "T-2841",
@@ -108,6 +108,13 @@ export const tasks: Task[] = [
     ],
   },
 ];
+
+// All mock tasks default to reusable (many students, one each).
+export const tasks: Task[] = mockTasks.map((t) => ({
+  ...t,
+  reusable: true,
+  filledCount: 0,
+}));
 
 export const submissions: Submission[] = [
   {

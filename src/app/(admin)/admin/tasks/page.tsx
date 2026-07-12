@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { euro } from "@/lib/utils";
-import { useTasks } from "@/lib/query/hooks";
+import { useAdminTasks } from "@/lib/query/hooks";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { deleteTask } from "@/lib/supabase/queries";
 import { Button, Card, PageTitle, Skeleton } from "@/components/ui";
@@ -12,7 +12,7 @@ import type { Task } from "@/types";
 
 export default function AdminTasksPage() {
   const qc = useQueryClient();
-  const { data: tasks, isLoading } = useTasks();
+  const { data: tasks, isLoading } = useAdminTasks();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export default function AdminTasksPage() {
     try {
       await deleteTask(t.id);
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["admin", "tasks"] });
       qc.invalidateQueries({ queryKey: ["admin", "stats"] });
     } catch (e) {
       alert(e instanceof Error ? e.message : "Delete failed");
@@ -67,7 +68,14 @@ export default function AdminTasksPage() {
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="text-lg shrink-0">{t.icon}</span>
-                  <span className="text-ink text-sm font-medium truncate">{t.title}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-ink text-sm font-medium truncate">{t.title}</span>
+                    {!t.reusable && (
+                      <span className="text-[11px] font-medium text-warning">
+                        One-time{t.filledCount >= 1 ? " · taken" : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-muted text-[13px] capitalize">{t.type}</span>
                 <span className="text-success text-[13px] font-bold tnum">

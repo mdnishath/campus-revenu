@@ -39,6 +39,8 @@ export function CreateTaskModal({
   const [requiresLink, setRequiresLink] = useState(
     task?.requiresLink ?? tpl.requiresLink
   );
+  // reusable = many students can each do it once; one-time = first student only
+  const [reusable, setReusable] = useState(task?.reusable ?? true);
   const [instructions, setInstructions] = useState(
     (task?.instructions?.length ? task.instructions : tpl.instructions).join("\n")
   );
@@ -87,6 +89,7 @@ export function CreateTaskModal({
       // (a bare "YYYY-MM-DD" would parse as UTC and hide today's task).
       starts_at: startDate ? new Date(startDate + "T00:00:00").toISOString() : null,
       ends_at: endDate ? new Date(endDate + "T23:59:59").toISOString() : null,
+      reusable,
     };
     try {
       if (isEdit && task) {
@@ -95,6 +98,7 @@ export function CreateTaskModal({
         await createTask(payload);
       }
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["admin", "tasks"] });
       qc.invalidateQueries({ queryKey: ["task", task?.id] });
       qc.invalidateQueries({ queryKey: ["admin", "stats"] });
       onClose();
@@ -156,6 +160,42 @@ export function CreateTaskModal({
             </Field>
             <div />
           </div>
+
+          {/* Availability — reusable (many students) vs one-time (first only) */}
+          <Field label="Availability">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setReusable(true)}
+                className={cn(
+                  "flex flex-col items-start gap-0.5 text-left px-3.5 py-2.5 rounded-[8px] border transition-colors",
+                  reusable
+                    ? "bg-accent text-white border-accent"
+                    : "bg-elevated border-line text-muted hover:text-ink"
+                )}
+              >
+                <span className="text-sm font-semibold">🔁 Reusable</span>
+                <span className={cn("text-[11px]", reusable ? "text-white/80" : "text-faint")}>
+                  Many students, one each
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setReusable(false)}
+                className={cn(
+                  "flex flex-col items-start gap-0.5 text-left px-3.5 py-2.5 rounded-[8px] border transition-colors",
+                  !reusable
+                    ? "bg-accent text-white border-accent"
+                    : "bg-elevated border-line text-muted hover:text-ink"
+                )}
+              >
+                <span className="text-sm font-semibold">1️⃣ One-time</span>
+                <span className={cn("text-[11px]", !reusable ? "text-white/80" : "text-faint")}>
+                  First student only
+                </span>
+              </button>
+            </div>
+          </Field>
 
           {/* Schedule — pick start + end from the calendar */}
           <Field label="Schedule (calendar)">

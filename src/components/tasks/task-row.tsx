@@ -13,7 +13,14 @@ export function TaskRow({ task }: { task: Task }) {
         <div className="text-ink text-sm font-semibold leading-tight truncate">
           {task.title}
         </div>
-        <div className="text-faint text-xs">{task.deadlineLabel}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-faint text-xs">{task.deadlineLabel}</span>
+          {!task.reusable && (
+            <span className="text-warning text-[10px] font-bold uppercase tracking-wide">
+              One-time
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex flex-col items-end gap-1.5">
         <div className="text-success text-[15px] font-bold tnum">

@@ -33,6 +33,8 @@ export interface Task {
   reviewText?: string; // suggested review/comment text students can copy
   startsAt?: string | null; // ISO — task goes live
   endsAt?: string | null; // ISO — task closes
+  reusable: boolean; // true = many students can each do it once; false = one-time (first student only)
+  filledCount: number; // how many students have submitted (used to gate one-time tasks)
 }
 
 export interface Submission {
